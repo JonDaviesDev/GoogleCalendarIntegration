@@ -3,6 +3,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from os import path
+import timestring
 import datetime
 import pickle
 import os, os.path
@@ -37,27 +38,39 @@ if path.exists("token.pkl"):
                         break
                     else:
                         element_list = entry.split(',')
-                        event_date = datetime.datetime.strptime(element_list[0], '%d-%m-%Y').strftime('%Y/%m/%d')
-                        split_time = element_list[1].split(':')
-                        event_time = str(str(int(int(split_time[0]) - 2)) + ':' + split_time[1])
-                        event_height = element_list[2]
-                        event_state = element_list[3]
+                        if element_list[3] == 'LW\n':
+                            continue
+                        else:
+                            # Date
+                            event_date = datetime.datetime.strptime(element_list[0], '%d-%m-%Y').strftime('%Y-%m-%d')
 
-                        event = {
-                            'summary': str(event_state + ': ' + event_time + ' - ' + event_height + 'm'),
-                            'location': 'Gower, Swansea',
-                            'description': 'Today\'s tide times',
-                            'start': {
-                            'dateTime': '2020-12-29T09:00:00-07:00',
-                            'timeZone': 'Europe/London',
-                            },
-                            'end': {
-                            'dateTime': '2020-12-29T17:00:00-07:00',
-                            'timeZone': 'Europe/London',
+                            # Time
+                            split_time = element_list[1].split(':')
+                            event_time_start = str(str(int(int(split_time[0]) - 2)).zfill(2) + ':' + split_time[1])
+                            event_time_end = str(str(int(int(split_time[0]) - 1)).zfill(2) + ':' + split_time[1])
+
+                            # Tide Height
+                            event_height = element_list[2]
+
+                            # Low or High Water
+                            event_state = element_list[3]
+
+                            start_time_date = str(event_date + 'T' + event_time_start + ':00' + '-00:00')
+                            end_time_date = str(event_date + 'T' + event_time_end + ':00' + '-00:00')
+
+                            event = {
+                                'summary': str(event_state + ': ' + ' - ' + event_height + 'm'),
+                                'location': 'Gower, Swansea',
+                                'description': 'Today\'s tide times',
+                                'start': {
+                                'dateTime': start_time_date,
+                                },
+                                'end': {
+                                'dateTime': end_time_date,
+                                },
                             }
-                        }
 
-                        event = service.events().insert(calendarId=calendar_id, body=event).execute()
+                            event = service.events().insert(calendarId=calendar_id, body=event).execute()
 
 
 
