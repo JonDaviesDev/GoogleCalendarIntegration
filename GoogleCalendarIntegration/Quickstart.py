@@ -46,8 +46,16 @@ if path.exists("token.pkl"):
 
                             # Time
                             split_time = element_list[1].split(':')
-                            event_time_start = str(str(int(int(split_time[0]) - 2)).zfill(2) + ':' + split_time[1])
-                            event_time_end = str(str(int(int(split_time[0]) - 1)).zfill(2) + ':' + split_time[1])
+
+                            tide_time = str(str(int(int(split_time[0]))).zfill(2) + ':' + split_time[1])
+                            tide_time_end = str(str(int(int(split_time[0]) + 1)).zfill(2) + ':' + split_time[1])
+
+                            session_time_start = str(str(int(int(split_time[0]) - 2)).zfill(2) + ':' + split_time[1])
+
+                            minus_symbol = '-'
+
+                            if minus_symbol in session_time_start:
+                                session_time_start = tide_time
 
                             # Tide Height
                             event_height = element_list[2]
@@ -55,18 +63,23 @@ if path.exists("token.pkl"):
                             # Low or High Water
                             event_state = element_list[3]
 
-                            start_time_date = str(event_date + 'T' + event_time_start + ':00' + '-00:00')
-                            end_time_date = str(event_date + 'T' + event_time_end + ':00' + '-00:00')
+                            if tide_time == '24:00':
+                                tide_time = '23:59'
+                            if tide_time_end == '24:00':
+                                tide_time_end = '23:59'
+
+                            tide_time_start = str(event_date + 'T' + tide_time + ':00' + '-00:00')
+                            tide_time_end = str(event_date + 'T' + tide_time_end + ':00' + '-00:00')
 
                             event = {
-                                'summary': str(event_state + ': ' + ' - ' + event_height + 'm'),
+                                'summary': str(event_state + ':' + tide_time + ' (' + session_time_start + ' start' + ') ' + event_height + 'm'),
                                 'location': 'Gower, Swansea',
                                 'description': 'Today\'s tide times',
                                 'start': {
-                                'dateTime': start_time_date,
+                                'dateTime': tide_time_start,
                                 },
                                 'end': {
-                                'dateTime': end_time_date,
+                                'dateTime': tide_time_end,
                                 },
                             }
 
