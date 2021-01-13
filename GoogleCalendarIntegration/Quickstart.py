@@ -9,8 +9,9 @@ import pickle
 import os, os.path
 import datetime
 
+# directory & pathway setup
 current_directory = os.getcwd()
-target_directory = 'TideTimes'
+target_directory = 'TideTimes(TEST)'
 tide_times_directory = str(current_directory + '\\' + target_directory)
 
 # if a token file containing the user's credentials already exists, then there is no need to recreate them
@@ -19,25 +20,35 @@ if path.exists("token.pkl"):
     # create a service object using the required service, its version and the credentials file
     service = build("calendar", "v3", credentials=pickle.load(open("token.pkl", "rb")))
 
+    # create an object containing a list of calendars belonging to the user
     cl = service.calendarList().list().execute()
 
+    # call a specific item from the first calendar called 'ID'
     calendar_id = cl['items'][0]['id']
 
+    # Loop setup
     element_list = []
-    index = 0
-    end = 7
 
+    end = 20
+
+    # for every file inside the tide times directory
     for file in os.listdir(tide_times_directory):
+        index = 0
+        # if the file is a .csv, enter
         if (file.endswith('.csv')):
+            # open the specific file in read mode
             with open(str(tide_times_directory + '\\' + file), 'r') as reader:
+                # for each element inside the .csv
                 for entry in reader:
                     if index == 0:      # this is to skip the column headings
                         index = 1
                         continue
+                    # this is a testing condition so that it only makes X amount of entries, not the whole thing
                     if index == end:
                         break
                     else:
                         element_list = entry.split(',')
+                        # do not add 'Low Water' elements, we are only interested in making events for 'High Water'
                         if element_list[3] == 'LW\n':
                             continue
                         else:
@@ -63,10 +74,15 @@ if path.exists("token.pkl"):
                             # Low or High Water
                             event_state = element_list[3]
 
-                            if tide_time == '24:00':
-                                tide_time = '23:59'
-                            if tide_time_end == '24:00':
-                                tide_time_end = '23:59'
+                            first_part_start = tide_time.split(':')[0]
+                            second_part_start = tide_time.split(':')[1]
+                            first_part_end = tide_time_end.split(':')[0]
+                            second_part_end = tide_time_end.split(':')[1]
+
+                            if first_part_start == '24':
+                                tide_time = str('23' + ':' + second_part_start)
+                            if first_part_end == '24':
+                                tide_time_end = str('23' + ':' + second_part_end)
 
                             tide_time_start = str(event_date + 'T' + tide_time + ':00' + '-00:00')
                             tide_time_end = str(event_date + 'T' + tide_time_end + ':00' + '-00:00')
